@@ -6,76 +6,63 @@
 
 
 # Turnaround one - Creating self to self relationship
-def turnaround_one_generator(user_statement):
 
+def turnaround_one_generator(user_statement):
 
     # import required libaries
     import spacy
     import contractions
     import pyinflect
 
-
     # Create an nlp object
     nlp=spacy.load('en')
 
-    # Disable NER in nlp pipeline
-    with nlp.disable_pipes('ner'):      
+    # Add merge_noun_chunks to pipeline
+    merge_noun_chunks = nlp.create_pipe("merge_noun_chunks")
+    nlp.add_pipe(merge_noun_chunks)
 
-        # Create a Spacy Document to parse
-        doc=nlp(contractions.fix(user_statement))
+    # Disable NER
+    with nlp.disable_pipes('ner'):
 
-        # Create a list of tokens from document i.e tokenize words
-        # Expanding english language contractions
+        # Normalise text
+        normalised_string=contractions.fix(user_statement)
+
+        # Create a Spacy Document Object
+        doc=nlp(normalised_string)
+
+        # Generate list of tokens
         token_list=[token.text for token in doc]
 
-        try:
-        
-            # CATEGORY B STATEMENTS
-            
-            # 
-            if doc[-1].pos_ != 'PROPN' and doc[-1].pos_ != 'PRON':
-                
-                if token_list[0]=='I':
-                    turnaround_one="Statement is already directed to self"
-                    
-                else:
-                    token_list[0]='I'
-                    token_list[1]=doc[1]._.inflect('VBP')
-                    turnaround_one=' '.join(token_list)
-                    
-                    
-            # CATEGORY A STATEMENTS        
-                
-            else:
-                
-                # If statement already contains 'I' and 'myself', turnaround one not required
-                if all(x in token_list for x in ['I', 'myself'])==True:        
-                    turnaround_one="Statement is already directed to self"
+        # CATEGORY A STATEMENT - 2 Key Criteria:
 
-                # Else generate turnaround one  
-                else:
-                    # Change 1st word to 'I'
-                    token_list[0]="I"
-                    
-                    if doc[1].tag_ !='VBD':
-                    # Change verb to be non-3rd person singular present
-                        token_list[1]=doc[1]._.inflect('VBP')
-                        
-                    token_list[-1]='myself'
-                        
-                    # Generate turnaround statement string 
-                    turnaround_one=' '.join(token_list)
+        # Sentence has at least 1 pronoun or proper noun AND # Sentence has both an object and a subject
+        if  any(person in [ token.pos_ for token in doc] for person in ['PRON','PROPN'])==True and\
+        all(dependency_label in [token.dep_ for token in doc] for dependency_label in ['nsubj','dobj'])==True:
 
-        except:
-            turnaround_one='Error - Turnaround One statement could not be generated'        
-                         
-        return turnaround_one
+                for token in doc:
+
+                # CAT A Statements - Type 1
+                    if token.dep_ =='nsubj' and token.text.upper() =='I':
+                        object_index=int(''.join([str(token.i) for token in doc if token.dep_ == 'dobj']))
+                        token_list[object_index]='myself'
+                        turnaround_one= ' '.join(token_list)
+
+                # CAT A Statements - Type 2
+                    elif token.dep_ =='nsubj' and token.text.upper() !='I':
+
+                        subject_index=int(''.join([str(token.i) for token in doc if token.dep_ == 'nsubj']))
+                        object_index=int(''.join([str(token.i) for token in doc if token.dep_ == 'dobj']))
+
+                        token_list[subject_index]='I'
+                        token_list[object_index]='myself'
+
+                        turnaround_one= ' '.join(token_list)
+    return turnaround_one
+
+
+
 
 
 
 
 # In[ ]:
-
-
-
-
