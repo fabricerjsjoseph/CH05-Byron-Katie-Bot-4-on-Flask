@@ -10,4 +10,5 @@ The project is still at an infancy stage. ‘She’ is not yet capable of having
 
 ![](Lucy-Demo-20200128.gif)
 
-## Process
+Watch on Youtube: https://youtu.be/sZ9m_7gdY6U
+
