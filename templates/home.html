@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
-  <title>Lucy</title>
+<html lang="en">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucy - Byron Katie Method Therapist</title>
     <link
       rel="shortcut icon"
       type="image/x-icon"
@@ -9,131 +11,447 @@
     />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <style>
-      body {
-        font-family: monospace;
-      }
-      h1 {
-        color: black;
-        font-size: 3em;
+      * {
+        box-sizing: border-box;
         margin: 0;
-        padding: 14px;
+        padding: 0;
       }
-      h3 {
-        color: black;
-        font-size: 20px;
-        margin-top: 3px;
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+      
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      
+      header {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         text-align: center;
       }
-      #chatbox {
-        margin-left: auto;
-        margin-right: auto;
-        width: 40%;
-        margin-top: 60px;
+      
+      h1 {
+        color: #667eea;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
       }
-      #userInput {
-        margin-left: auto;
-        margin-right: auto;
-        width: 40%;
-        margin-top: 60px;
+      
+      .subtitle {
+        color: #666;
+        font-size: 1.1em;
+        margin-bottom: 15px;
       }
-      #textInput {
-        width: 90%;
-        border: none;
-        border-bottom: 3px solid black;
-        font-family: monospace;
-        font-size: 17px;
-      }
-      .userText {
-        color: white;
-        font-family: monospace;
-        font-size: 17px;
-        text-align: right;
-        line-height: 30px;
-      }
-      .userText span {
-        background-color: #808080;
-        padding: 10px;
-        border-radius: 2px;
-      }
-      .botText {
-        color: white;
-        font-family: monospace;
-        font-size: 17px;
+      
+      .info-box {
+        background: #f8f9fa;
+        border-left: 4px solid #667eea;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 15px;
         text-align: left;
-        line-height: 30px;
       }
+      
+      .info-box h3 {
+        color: #667eea;
+        margin-bottom: 8px;
+        font-size: 1.1em;
+      }
+      
+      .info-box p {
+        color: #555;
+        font-size: 0.95em;
+        line-height: 1.6;
+      }
+      
+      .progress-bar {
+        background: white;
+        border-radius: 15px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      }
+      
+      .progress-text {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+      }
+      
+      .progress-track {
+        background: #e0e0e0;
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      
+      .progress-fill {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        height: 100%;
+        width: 0%;
+        transition: width 0.5s ease;
+      }
+      
+      #chatbox {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        min-height: 400px;
+        max-height: 500px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      }
+      
+      #chatbox::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      #chatbox::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+      
+      #chatbox::-webkit-scrollbar-thumb {
+        background: #667eea;
+        border-radius: 10px;
+      }
+      
+      .userText {
+        text-align: right;
+        margin: 15px 0;
+        animation: slideInRight 0.3s ease;
+      }
+      
+      .userText span {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 18px;
+        border-radius: 18px 18px 0 18px;
+        max-width: 70%;
+        word-wrap: break-word;
+        box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        font-size: 0.95em;
+        line-height: 1.5;
+      }
+      
+      .botText {
+        text-align: left;
+        margin: 15px 0;
+        animation: slideInLeft 0.3s ease;
+      }
+      
       .botText span {
-        background-color: #4169e1;
-        padding: 10px;
-        border-radius: 2px;
+        display: inline-block;
+        background: #f0f2f5;
+        color: #333;
+        padding: 12px 18px;
+        border-radius: 18px 18px 18px 0;
+        max-width: 70%;
+        word-wrap: break-word;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        font-size: 0.95em;
+        line-height: 1.5;
       }
-      #tidbit {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 300px;
+      
+      @keyframes slideInLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
       }
-      .boxed {
-        margin-left: auto;
-        margin-right: auto;
-        width: 78%;
-        margin-top: 60px;
-        border: 1px solid green;
+      
+      @keyframes slideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
       }
-      .box {
-        border: 2px solid black;
+      
+      .loading {
+        text-align: left;
+        margin: 15px 0;
+      }
+      
+      .loading span {
+        display: inline-block;
+        background: #f0f2f5;
+        padding: 12px 18px;
+        border-radius: 18px;
+        animation: pulse 1.5s ease infinite;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      
+      .input-container {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      
+      #textInput {
+        flex: 1;
+        border: 2px solid #e0e0e0;
+        border-radius: 25px;
+        padding: 12px 20px;
+        font-size: 1em;
+        font-family: inherit;
+        transition: border-color 0.3s;
+      }
+      
+      #textInput:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      
+      #sendButton {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 1.2em;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+      }
+      
+      #sendButton:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.5);
+      }
+      
+      #sendButton:active {
+        transform: scale(0.95);
+      }
+      
+      #resetButton {
+        background: #ff6b6b;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 10px 20px;
+        font-size: 0.9em;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 3px 10px rgba(255, 107, 107, 0.3);
+      }
+      
+      #resetButton:hover {
+        background: #ff5252;
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.5);
+      }
+      
+      .button-group {
+        display: flex;
+        justify-content: center;
+        margin-top: 15px;
+      }
+      
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 1.8em;
+        }
+        
+        .subtitle {
+          font-size: 1em;
+        }
+        
+        .userText span,
+        .botText span {
+          max-width: 85%;
+        }
+        
+        #chatbox {
+          min-height: 300px;
+          max-height: 400px;
+        }
       }
     </style>
   </head>
   <body>
-    <img />
-    <center>
-      <h1>
-        <p>
-          LUCY: The Byron Katie Method Therapist
-        </p>
-      </h1>
-    </center>
-    <h3>
-      <p>
-        Placeholder for some more text here
-      </p>
-    </h3>
-    <div class="box"></div>
-    <div class="boxed">
-      <div>
-        <div id="chatbox">
-          <p class="botText">
-            <span>LUCY: Hi sweetheart, I am a Byron Katie Bot. What thought would you like to examine?</span>
+    <div class="container">
+      <header>
+        <h1>🌟 LUCY</h1>
+        <p class="subtitle">The Byron Katie Method Therapist</p>
+        <div class="info-box">
+          <h3>Welcome to The Work</h3>
+          <p>
+            I'll guide you through Byron Katie's "The Work" - a powerful method of inquiry 
+            consisting of four questions and turnarounds. Share a stressful thought, and I'll 
+            help you examine it from different perspectives. This process typically takes 11 steps.
           </p>
         </div>
-        <div id="userInput">
-          <input id="textInput" type="text" name="msg" placeholder="Message" />
+      </header>
+      
+      <div class="progress-bar">
+        <div class="progress-text">Progress: <span id="progressText">Starting...</span></div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
         </div>
       </div>
-      <script>
-        function getBotResponse() {
-          var rawText = $("#textInput").val();
-          var userHtml = '<p class="userText"><span>' + rawText + "</span></p>";
-          $("#textInput").val("");
-          $("#chatbox").append(userHtml);
-          document
-            .getElementById("userInput")
-            .scrollIntoView({ block: "start", behavior: "smooth" });
-          $.get("/get", { msg: rawText }).done(function(data) {
-            var botHtml = '<p class="botText"><span>' + data + "</span></p>";
-            $("#chatbox").append(botHtml);
-            document
-              .getElementById("userInput")
-              .scrollIntoView({ block: "start", behavior: "smooth" });
-          });
-        }
-        $("#textInput").keypress(function(e) {
-          if (e.which == 13) {
-            getBotResponse();
-          }
-        });
-      </script>
+      
+      <div id="chatbox">
+        <p class="botText">
+          <span>Hi sweetheart, I am Lucy, your Byron Katie Bot. What thought would you like to examine today? Share something that's been troubling you.</span>
+        </p>
+      </div>
+      
+      <div class="input-container">
+        <input 
+          id="textInput" 
+          type="text" 
+          name="msg" 
+          placeholder="Type your message here..."
+          autocomplete="off"
+        />
+        <button id="sendButton" title="Send message">➤</button>
+      </div>
+      
+      <div class="button-group">
+        <button id="resetButton">🔄 Start New Session</button>
+      </div>
     </div>
+
+    <script>
+      function updateProgress(current, total) {
+        const percentage = Math.min((current / total) * 100, 100);
+        $('#progressFill').css('width', percentage + '%');
+        $('#progressText').text('Step ' + current + ' of ' + total);
+      }
+      
+      function scrollToBottom() {
+        const chatbox = document.getElementById("chatbox");
+        chatbox.scrollTop = chatbox.scrollHeight;
+      }
+      
+      function showLoading() {
+        $('#chatbox').append('<p class="loading" id="loadingIndicator"><span>Lucy is thinking...</span></p>');
+        scrollToBottom();
+      }
+      
+      function hideLoading() {
+        $('#loadingIndicator').remove();
+      }
+      
+      function getBotResponse() {
+        var rawText = $("#textInput").val().trim();
+        
+        if (!rawText) {
+          return; // Don't send empty messages
+        }
+        
+        var userHtml = '<p class="userText"><span>' + escapeHtml(rawText) + "</span></p>";
+        $("#textInput").val("");
+        $("#chatbox").append(userHtml);
+        scrollToBottom();
+        
+        // Disable input while processing
+        $("#textInput").prop("disabled", true);
+        $("#sendButton").prop("disabled", true);
+        
+        showLoading();
+        
+        $.get("/get", { msg: rawText })
+          .done(function(data) {
+            hideLoading();
+            
+            var response = data.response || data;
+            var botHtml = '<p class="botText"><span>' + escapeHtml(response) + "</span></p>";
+            $("#chatbox").append(botHtml);
+            scrollToBottom();
+            
+            // Update progress if available
+            if (data.progress) {
+              updateProgress(data.progress.current, data.progress.total);
+            }
+          })
+          .fail(function(xhr, status, error) {
+            hideLoading();
+            var errorHtml = '<p class="botText"><span>Sorry, I encountered an error. Please try again.</span></p>';
+            $("#chatbox").append(errorHtml);
+            scrollToBottom();
+          })
+          .always(function() {
+            // Re-enable input
+            $("#textInput").prop("disabled", false);
+            $("#sendButton").prop("disabled", false);
+            $("#textInput").focus();
+          });
+      }
+      
+      function escapeHtml(text) {
+        var map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+      }
+      
+      function resetSession() {
+        if (confirm("Are you sure you want to start a new session? Your current conversation will be lost.")) {
+          $.get("/reset")
+            .done(function(data) {
+              $("#chatbox").html('<p class="botText"><span>Hi sweetheart, I am Lucy, your Byron Katie Bot. What thought would you like to examine today? Share something that\'s been troubling you.</span></p>');
+              $("#textInput").val("");
+              updateProgress(0, 11);
+              scrollToBottom();
+            })
+            .fail(function() {
+              alert("Failed to reset session. Please refresh the page.");
+            });
+        }
+      }
+      
+      // Event listeners
+      $("#textInput").keypress(function(e) {
+        if (e.which == 13 && !$(this).prop("disabled")) {
+          getBotResponse();
+        }
+      });
+      
+      $("#sendButton").click(function() {
+        getBotResponse();
+      });
+      
+      $("#resetButton").click(function() {
+        resetSession();
+      });
+      
+      // Focus on input when page loads
+      $(document).ready(function() {
+        $("#textInput").focus();
+        updateProgress(0, 11);
+      });
+    </script>
   </body>
 </html>
