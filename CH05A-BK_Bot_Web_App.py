@@ -4,6 +4,7 @@
 
 import glob
 import re
+import os
 
 # import private modules
 
@@ -39,42 +40,56 @@ four_questions_guidance_list=master_list[2]
 # Store all turnaround questions & related messages
 turnarounds_list=master_list[3]
 
-# Initialise list to store user inputs
-user_message_log=[]
-
-# Initialise list to store chatbot responses
-all_bot_responses_list=[]
-
 
 def gen_all_bot_responses(first_message):
-
+    """Generate all bot responses for the entire conversation based on the first message."""
+    responses = []
+    
     # Generate the 4 questions based on the user's 1st message
     for question_no in range(4):
         response='LUCY: ' + four_questions_list[question_no]+' {}?'.format(first_message)
-        all_bot_responses_list.append(response)
+        responses.append(response)
 
     # Display the 3 statements of the turnaround sections
-    tr_statement_1='LUCY: '+ turnarounds_list[0]+' {}'.format(first_message)+'... type OK to continue.'
-    tr_statement_2='LUCY: '+ turnarounds_list[1]+' type OK to continue.'
-    tr_statement_3='LUCY: '+ turnarounds_list[2]+'.. type OK to continue.'
-    all_bot_responses_list.extend([tr_statement_1,tr_statement_2,tr_statement_3])
+    if len(turnarounds_list) > 0:
+        tr_statement_1='LUCY: '+ turnarounds_list[0]+' {}'.format(first_message)+'... type OK to continue.'
+        responses.append(tr_statement_1)
+    if len(turnarounds_list) > 1:
+        tr_statement_2='LUCY: '+ turnarounds_list[1]+' type OK to continue.'
+        responses.append(tr_statement_2)
+    if len(turnarounds_list) > 2:
+        tr_statement_3='LUCY: '+ turnarounds_list[2]+'.. type OK to continue.'
+        responses.append(tr_statement_3)
 
-    # Generate the three turnaround questions based on the user's 1st message
-    turnaround_one='LUCY: ' + turnarounds_list[3]+' {}'.format(turnaround_one_generator(first_message))
-    turnaround_two='LUCY: ' + turnarounds_list[4]+' {}'.format(turnaround_two_generator(first_message))
-    turnaround_three='LUCY: ' + turnarounds_list[5]+' {}'.format(turnaround_three_generator(first_message))
-
-    all_bot_responses_list.extend([turnaround_one,turnaround_two,turnaround_three])
+    try:
+        # Generate the three turnaround questions based on the user's 1st message
+        if len(turnarounds_list) > 3:
+            turnaround_one='LUCY: ' + turnarounds_list[3]+' {}'.format(turnaround_one_generator(first_message))
+            responses.append(turnaround_one)
+        if len(turnarounds_list) > 4:
+            turnaround_two='LUCY: ' + turnarounds_list[4]+' {}'.format(turnaround_two_generator(first_message))
+            responses.append(turnaround_two)
+        if len(turnarounds_list) > 5:
+            turnaround_three='LUCY: ' + turnarounds_list[5]+' {}'.format(turnaround_three_generator(first_message))
+            responses.append(turnaround_three)
+    except Exception as e:
+        # If turnaround generation fails, provide a graceful fallback
+        responses.append('LUCY: I had trouble generating turnarounds for this statement. Let\'s continue with your reflections.')
+        print(f"Turnaround generation error: {e}")
 
     # Add Closing Statement
     closing_statement=statements_list[1]+' {}'.format(first_message)
-    all_bot_responses_list.append(closing_statement)
+    responses.append(closing_statement)
 
+    return responses
 
-    return all_bot_responses_list
-
-def bot_response(user_message):
-
+def bot_response(user_message, user_message_log, all_bot_responses_list):
+    """Generate bot response based on user message and conversation state."""
+    
+    # Validate user message
+    if not user_message or not user_message.strip():
+        return "LUCY: Please share your thought with me.", user_message_log, all_bot_responses_list
+    
     # Add user's message to list
     user_message_log.append(user_message)
 
@@ -84,44 +99,92 @@ def bot_response(user_message):
     # Only run bot_response function once
     if no_messages==1:
         # Generate all bot reponses based on 1st user message
-        gen_all_bot_responses(user_message_log[0])
+        all_bot_responses_list = gen_all_bot_responses(user_message_log[0])
+
+    # Check if we have responses
+    if no_messages > len(all_bot_responses_list):
+        response = "LUCY: Thank you for sharing. You've completed the inquiry process. Click 'Start New Session' to begin again."
+    else:
+        # Add bot message to conversation list
+        response = all_bot_responses_list[no_messages-1]
+
+    return response, user_message_log, all_bot_responses_list
 
 
-    # Add bot message to conversation list
-    response= all_bot_responses_list[no_messages-1]
 
-    return response
-
-
-
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, jsonify
+import secrets
 
 # Create the App Object
 app = Flask(__name__)
-
-# Change Flask environment from Production to Development
-#get_ipython().run_line_magic('env', 'FLASK_ENV=development')
+# Set secret key for session management
+app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 
 
 @app.route("/")
 def home():
+    """Render the home page."""
     return render_template("home.html")
 
 @app.route("/get")
 def get_bot_response():
-    user_message = request.args.get('msg')
-    return str(bot_response(user_message))
+    """Handle bot response with session management."""
+    user_message = request.args.get('msg', '').strip()
+    
+    # Initialize session variables if not present
+    if 'user_message_log' not in session:
+        session['user_message_log'] = []
+    if 'all_bot_responses_list' not in session:
+        session['all_bot_responses_list'] = []
+    
+    # Get current session state
+    user_message_log = session['user_message_log']
+    all_bot_responses_list = session['all_bot_responses_list']
+    
+    # Generate response
+    response, user_message_log, all_bot_responses_list = bot_response(
+        user_message, user_message_log, all_bot_responses_list
+    )
+    
+    # Update session
+    session['user_message_log'] = user_message_log
+    session['all_bot_responses_list'] = all_bot_responses_list
+    
+    # Calculate progress
+    total_steps = len(all_bot_responses_list) if all_bot_responses_list else 11
+    current_step = len(user_message_log)
+    
+    return jsonify({
+        'response': str(response),
+        'progress': {
+            'current': current_step,
+            'total': total_steps
+        }
+    })
 
-
-
-# import webbrowser module
-import webbrowser
-
-# Register webbrowser
-chrome_path="C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
-webbrowser.register('chrome', None,webbrowser.BackgroundBrowser(chrome_path))
+@app.route("/reset")
+def reset_session():
+    """Reset the conversation session."""
+    session.clear()
+    return jsonify({'status': 'success', 'message': 'Session reset successfully'})
 
 
 if __name__ == "__main__":
-    webbrowser.get('chrome').open_new('http://127.0.0.1:5000/')
-    app.run(debug=False)
+    import webbrowser
+    import sys
+    
+    # Cross-platform browser opening
+    port = 5000
+    url = f'http://127.0.0.1:{port}/'
+    
+    # Try to open browser (works across platforms)
+    try:
+        webbrowser.open(url)
+    except Exception as e:
+        print(f"Could not open browser automatically: {e}")
+        print(f"Please open your browser and navigate to: {url}")
+    
+    # Run the app
+    print(f"Starting Lucy - Byron Katie Bot on {url}")
+    print("Press Ctrl+C to stop the server")
+    app.run(debug=True, port=port, use_reloader=False)

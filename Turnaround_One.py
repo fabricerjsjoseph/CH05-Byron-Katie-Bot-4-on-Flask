@@ -15,7 +15,7 @@ def turnaround_one_generator(user_statement):
     import pyinflect
 
     # Create an nlp object
-    nlp=spacy.load('en')
+    nlp=spacy.load('en_core_web_sm')
 
     # Add merge_noun_chunks to pipeline
     merge_noun_chunks = nlp.create_pipe("merge_noun_chunks")

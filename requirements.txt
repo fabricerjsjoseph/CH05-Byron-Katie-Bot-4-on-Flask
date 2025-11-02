@@ -1,0 +1,4 @@
+Flask==2.3.3
+spacy==2.3.9
+contractions==0.1.73
+pyinflect==0.5.1
