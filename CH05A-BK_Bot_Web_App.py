@@ -83,7 +83,7 @@ def gen_all_bot_responses(first_message):
 
     return responses
 
-def bot_response(user_message, user_message_log, all_bot_responses_list):
+def bot_response(user_message, user_message_log, all_bot_responses_list, use_llm=False):
     """Generate bot response based on user message and conversation state."""
     
     # Validate user message
@@ -96,6 +96,20 @@ def bot_response(user_message, user_message_log, all_bot_responses_list):
     # Calculate no of user messages stored in list
     no_messages=len(user_message_log)
 
+    # Try LLM mode if enabled and available
+    if use_llm and config.LLM_ENABLED and llm_client.is_available():
+        llm_response = llm_client.generate_byron_katie_response(
+            user_message, 
+            no_messages - 1, 
+            user_message_log
+        )
+        
+        # If LLM generated a response, use it
+        if llm_response:
+            response = f"LUCY: {llm_response}" if not llm_response.startswith("LUCY:") else llm_response
+            return response, user_message_log, all_bot_responses_list
+
+    # Fall back to NLP mode (original behavior)
     # Only run bot_response function once
     if no_messages==1:
         # Generate all bot reponses based on 1st user message
@@ -114,11 +128,16 @@ def bot_response(user_message, user_message_log, all_bot_responses_list):
 
 from flask import Flask, render_template, request, session, jsonify
 import secrets
+import config
+from llm_client import LLMClient
 
 # Create the App Object
 app = Flask(__name__)
 # Set secret key for session management
-app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(16))
+app.secret_key = config.SECRET_KEY or secrets.token_hex(16)
+
+# Initialize LLM client
+llm_client = LLMClient()
 
 
 @app.route("/")
@@ -136,14 +155,17 @@ def get_bot_response():
         session['user_message_log'] = []
     if 'all_bot_responses_list' not in session:
         session['all_bot_responses_list'] = []
+    if 'use_llm' not in session:
+        session['use_llm'] = config.LLM_ENABLED
     
     # Get current session state
     user_message_log = session['user_message_log']
     all_bot_responses_list = session['all_bot_responses_list']
+    use_llm = session.get('use_llm', config.LLM_ENABLED)
     
     # Generate response
     response, user_message_log, all_bot_responses_list = bot_response(
-        user_message, user_message_log, all_bot_responses_list
+        user_message, user_message_log, all_bot_responses_list, use_llm
     )
     
     # Update session
@@ -159,7 +181,8 @@ def get_bot_response():
         'progress': {
             'current': current_step,
             'total': total_steps
-        }
+        },
+        'mode': 'LLM' if use_llm and config.LLM_ENABLED else 'NLP'
     })
 
 @app.route("/reset")
@@ -167,6 +190,37 @@ def reset_session():
     """Reset the conversation session."""
     session.clear()
     return jsonify({'status': 'success', 'message': 'Session reset successfully'})
+
+@app.route("/toggle_mode", methods=['POST'])
+def toggle_mode():
+    """Toggle between NLP and LLM mode."""
+    if not config.LLM_ENABLED or not llm_client.is_available():
+        return jsonify({
+            'status': 'error',
+            'message': 'LLM mode is not available. Please configure LLM_API_URL.',
+            'mode': 'NLP'
+        })
+    
+    current_mode = session.get('use_llm', False)
+    session['use_llm'] = not current_mode
+    
+    return jsonify({
+        'status': 'success',
+        'mode': 'LLM' if session['use_llm'] else 'NLP',
+        'message': f"Switched to {'LLM' if session['use_llm'] else 'NLP'} mode"
+    })
+
+@app.route("/status")
+def get_status():
+    """Get current configuration and mode status."""
+    return jsonify({
+        'llm_enabled': config.LLM_ENABLED,
+        'llm_available': llm_client.is_available(),
+        'llm_api_url': config.LLM_API_URL if config.LLM_API_URL else 'Not configured',
+        'llm_model': config.LLM_MODEL,
+        'current_mode': 'LLM' if session.get('use_llm', False) else 'NLP',
+        'can_toggle': config.LLM_ENABLED and llm_client.is_available()
+    })
 
 
 if __name__ == "__main__":
