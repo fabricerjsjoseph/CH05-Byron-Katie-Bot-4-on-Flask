@@ -14,7 +14,7 @@ def turnaround_two_generator(user_statement):
     import pyinflect
 
     # Create an nlp object
-    nlp=spacy.load('en')
+    nlp=spacy.load('en_core_web_sm')
 
     # Disable NER in nlp pipeline
     with nlp.disable_pipes('ner'):

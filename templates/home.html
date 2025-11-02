@@ -9,7 +9,7 @@
       type="image/x-icon"
       href="https://user-images.githubusercontent.com/20112458/49326597-773b7280-f57a-11e8-853d-20ed61d18b0d.png"
     />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
     <style>
       * {
         box-sizing: border-box;
@@ -342,8 +342,8 @@
     <script>
       function updateProgress(current, total) {
         const percentage = Math.min((current / total) * 100, 100);
-        $('#progressFill').css('width', percentage + '%');
-        $('#progressText').text('Step ' + current + ' of ' + total);
+        document.getElementById('progressFill').style.width = percentage + '%';
+        document.getElementById('progressText').textContent = 'Step ' + current + ' of ' + total;
       }
       
       function scrollToBottom() {
@@ -352,58 +352,16 @@
       }
       
       function showLoading() {
-        $('#chatbox').append('<p class="loading" id="loadingIndicator"><span>Lucy is thinking...</span></p>');
+        const loadingHtml = '<p class="loading" id="loadingIndicator"><span>Lucy is thinking...</span></p>';
+        document.getElementById('chatbox').insertAdjacentHTML('beforeend', loadingHtml);
         scrollToBottom();
       }
       
       function hideLoading() {
-        $('#loadingIndicator').remove();
-      }
-      
-      function getBotResponse() {
-        var rawText = $("#textInput").val().trim();
-        
-        if (!rawText) {
-          return; // Don't send empty messages
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator) {
+          loadingIndicator.remove();
         }
-        
-        var userHtml = '<p class="userText"><span>' + escapeHtml(rawText) + "</span></p>";
-        $("#textInput").val("");
-        $("#chatbox").append(userHtml);
-        scrollToBottom();
-        
-        // Disable input while processing
-        $("#textInput").prop("disabled", true);
-        $("#sendButton").prop("disabled", true);
-        
-        showLoading();
-        
-        $.get("/get", { msg: rawText })
-          .done(function(data) {
-            hideLoading();
-            
-            var response = data.response || data;
-            var botHtml = '<p class="botText"><span>' + escapeHtml(response) + "</span></p>";
-            $("#chatbox").append(botHtml);
-            scrollToBottom();
-            
-            // Update progress if available
-            if (data.progress) {
-              updateProgress(data.progress.current, data.progress.total);
-            }
-          })
-          .fail(function(xhr, status, error) {
-            hideLoading();
-            var errorHtml = '<p class="botText"><span>Sorry, I encountered an error. Please try again.</span></p>';
-            $("#chatbox").append(errorHtml);
-            scrollToBottom();
-          })
-          .always(function() {
-            // Re-enable input
-            $("#textInput").prop("disabled", false);
-            $("#sendButton").prop("disabled", false);
-            $("#textInput").focus();
-          });
       }
       
       function escapeHtml(text) {
@@ -417,39 +375,96 @@
         return text.replace(/[&<>"']/g, function(m) { return map[m]; });
       }
       
+      function getBotResponse() {
+        const textInput = document.getElementById('textInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatbox = document.getElementById('chatbox');
+        const rawText = textInput.value.trim();
+        
+        if (!rawText) {
+          return; // Don't send empty messages
+        }
+        
+        const userHtml = '<p class="userText"><span>' + escapeHtml(rawText) + "</span></p>";
+        textInput.value = "";
+        chatbox.insertAdjacentHTML('beforeend', userHtml);
+        scrollToBottom();
+        
+        // Disable input while processing
+        textInput.disabled = true;
+        sendButton.disabled = true;
+        
+        showLoading();
+        
+        fetch('/get?msg=' + encodeURIComponent(rawText))
+          .then(response => response.json())
+          .then(data => {
+            hideLoading();
+            
+            const response = data.response || data;
+            const botHtml = '<p class="botText"><span>' + escapeHtml(response) + "</span></p>";
+            chatbox.insertAdjacentHTML('beforeend', botHtml);
+            scrollToBottom();
+            
+            // Update progress if available
+            if (data.progress) {
+              updateProgress(data.progress.current, data.progress.total);
+            }
+          })
+          .catch(error => {
+            hideLoading();
+            const errorHtml = '<p class="botText"><span>Sorry, I encountered an error. Please try again.</span></p>';
+            chatbox.insertAdjacentHTML('beforeend', errorHtml);
+            scrollToBottom();
+            console.error('Error:', error);
+          })
+          .finally(() => {
+            // Re-enable input
+            textInput.disabled = false;
+            sendButton.disabled = false;
+            textInput.focus();
+          });
+      }
+      
       function resetSession() {
         if (confirm("Are you sure you want to start a new session? Your current conversation will be lost.")) {
-          $.get("/reset")
-            .done(function(data) {
-              $("#chatbox").html('<p class="botText"><span>Hi sweetheart, I am Lucy, your Byron Katie Bot. What thought would you like to examine today? Share something that\'s been troubling you.</span></p>');
-              $("#textInput").val("");
+          fetch('/reset')
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('chatbox').innerHTML = '<p class="botText"><span>Hi sweetheart, I am Lucy, your Byron Katie Bot. What thought would you like to examine today? Share something that\'s been troubling you.</span></p>';
+              document.getElementById('textInput').value = "";
               updateProgress(0, 11);
               scrollToBottom();
             })
-            .fail(function() {
+            .catch(error => {
               alert("Failed to reset session. Please refresh the page.");
+              console.error('Error:', error);
             });
         }
       }
       
       // Event listeners
-      $("#textInput").keypress(function(e) {
-        if (e.which == 13 && !$(this).prop("disabled")) {
+      document.addEventListener('DOMContentLoaded', function() {
+        const textInput = document.getElementById('textInput');
+        const sendButton = document.getElementById('sendButton');
+        const resetButton = document.getElementById('resetButton');
+        
+        textInput.addEventListener('keypress', function(e) {
+          if (e.which == 13 && !textInput.disabled) {
+            getBotResponse();
+          }
+        });
+        
+        sendButton.addEventListener('click', function() {
           getBotResponse();
-        }
-      });
-      
-      $("#sendButton").click(function() {
-        getBotResponse();
-      });
-      
-      $("#resetButton").click(function() {
-        resetSession();
-      });
-      
-      // Focus on input when page loads
-      $(document).ready(function() {
-        $("#textInput").focus();
+        });
+        
+        resetButton.addEventListener('click', function() {
+          resetSession();
+        });
+        
+        // Focus on input when page loads
+        textInput.focus();
         updateProgress(0, 11);
       });
     </script>

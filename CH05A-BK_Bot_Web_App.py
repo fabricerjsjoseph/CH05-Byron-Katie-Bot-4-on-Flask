@@ -51,20 +51,31 @@ def gen_all_bot_responses(first_message):
         responses.append(response)
 
     # Display the 3 statements of the turnaround sections
-    tr_statement_1='LUCY: '+ turnarounds_list[0]+' {}'.format(first_message)+'... type OK to continue.'
-    tr_statement_2='LUCY: '+ turnarounds_list[1]+' type OK to continue.'
-    tr_statement_3='LUCY: '+ turnarounds_list[2]+'.. type OK to continue.'
-    responses.extend([tr_statement_1,tr_statement_2,tr_statement_3])
+    if len(turnarounds_list) > 0:
+        tr_statement_1='LUCY: '+ turnarounds_list[0]+' {}'.format(first_message)+'... type OK to continue.'
+        responses.append(tr_statement_1)
+    if len(turnarounds_list) > 1:
+        tr_statement_2='LUCY: '+ turnarounds_list[1]+' type OK to continue.'
+        responses.append(tr_statement_2)
+    if len(turnarounds_list) > 2:
+        tr_statement_3='LUCY: '+ turnarounds_list[2]+'.. type OK to continue.'
+        responses.append(tr_statement_3)
 
     try:
         # Generate the three turnaround questions based on the user's 1st message
-        turnaround_one='LUCY: ' + turnarounds_list[3]+' {}'.format(turnaround_one_generator(first_message))
-        turnaround_two='LUCY: ' + turnarounds_list[4]+' {}'.format(turnaround_two_generator(first_message))
-        turnaround_three='LUCY: ' + turnarounds_list[5]+' {}'.format(turnaround_three_generator(first_message))
-        responses.extend([turnaround_one,turnaround_two,turnaround_three])
+        if len(turnarounds_list) > 3:
+            turnaround_one='LUCY: ' + turnarounds_list[3]+' {}'.format(turnaround_one_generator(first_message))
+            responses.append(turnaround_one)
+        if len(turnarounds_list) > 4:
+            turnaround_two='LUCY: ' + turnarounds_list[4]+' {}'.format(turnaround_two_generator(first_message))
+            responses.append(turnaround_two)
+        if len(turnarounds_list) > 5:
+            turnaround_three='LUCY: ' + turnarounds_list[5]+' {}'.format(turnaround_three_generator(first_message))
+            responses.append(turnaround_three)
     except Exception as e:
         # If turnaround generation fails, provide a graceful fallback
         responses.append('LUCY: I had trouble generating turnarounds for this statement. Let\'s continue with your reflections.')
+        print(f"Turnaround generation error: {e}")
 
     # Add Closing Statement
     closing_statement=statements_list[1]+' {}'.format(first_message)
