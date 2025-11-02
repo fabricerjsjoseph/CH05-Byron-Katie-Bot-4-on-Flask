@@ -213,13 +213,17 @@ def toggle_mode():
 @app.route("/status")
 def get_status():
     """Get current configuration and mode status."""
+    use_llm_session = session.get('use_llm', False)
+    llm_available = config.LLM_ENABLED and llm_client.is_available()
+    actual_mode = 'LLM' if (use_llm_session and llm_available) else 'NLP'
+    
     return jsonify({
         'llm_enabled': config.LLM_ENABLED,
         'llm_available': llm_client.is_available(),
         'llm_api_url': config.LLM_API_URL if config.LLM_API_URL else 'Not configured',
         'llm_model': config.LLM_MODEL,
-        'current_mode': 'LLM' if session.get('use_llm', False) else 'NLP',
-        'can_toggle': config.LLM_ENABLED and llm_client.is_available()
+        'current_mode': actual_mode,
+        'can_toggle': llm_available
     })
 
 

@@ -5,6 +5,26 @@ from typing import Optional, Dict, Any
 import config
 
 
+# System prompt for Byron Katie method
+BYRON_KATIE_SYSTEM_PROMPT = """You are Lucy, a compassionate therapist trained in Byron Katie's "The Work" method. 
+The Work consists of four questions and turnarounds to help examine stressful thoughts.
+
+The four questions are:
+1. Is it true?
+2. Can you absolutely know that it's true?
+3. How do you react—what happens—when you believe that thought?
+4. Who would you be without the thought?
+
+After the questions, you guide users through turnarounds - examining the thought from different perspectives.
+
+Your responses should be:
+- Compassionate and supportive
+- Brief and focused on the current inquiry step
+- In the style of "LUCY: [your response]"
+- Guiding the user through self-inquiry rather than giving advice
+"""
+
+
 class LLMClient:
     """Client for interacting with LLM API endpoints."""
     
@@ -112,10 +132,10 @@ class LLMClient:
             return None
         
         # Build context for the LLM
-        context = self._build_byron_katie_context(user_statement, conversation_step, user_message_log)
+        prompt = self._build_byron_katie_context(user_statement, conversation_step, user_message_log)
         
         # Generate response
-        result = self.generate_response(context)
+        result = self.generate_response(prompt)
         
         if 'error' in result:
             # Log error but return None to fall back to NLP mode
@@ -141,29 +161,11 @@ class LLMClient:
         Returns:
             Formatted context string for the LLM
         """
-        system_prompt = """You are Lucy, a compassionate therapist trained in Byron Katie's "The Work" method. 
-The Work consists of four questions and turnarounds to help examine stressful thoughts.
-
-The four questions are:
-1. Is it true?
-2. Can you absolutely know that it's true?
-3. How do you react—what happens—when you believe that thought?
-4. Who would you be without the thought?
-
-After the questions, you guide users through turnarounds - examining the thought from different perspectives.
-
-Your responses should be:
-- Compassionate and supportive
-- Brief and focused on the current inquiry step
-- In the style of "LUCY: [your response]"
-- Guiding the user through self-inquiry rather than giving advice
-"""
-        
         conversation_history = ""
         if user_message_log:
             conversation_history = "\n".join([f"User: {msg}" for msg in user_message_log])
         
-        prompt = f"""{system_prompt}
+        prompt = f"""{BYRON_KATIE_SYSTEM_PROMPT}
 
 Conversation so far:
 {conversation_history}
