@@ -37,5 +37,8 @@ env/
 instance/
 .webassets-cache
 
+# Environment variables
+.env
+
 # Spacy models
 en_core_web_*/

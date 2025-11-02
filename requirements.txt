@@ -1,4 +1,5 @@
 Flask==2.3.3
+requests>=2.31.0
 spacy==2.3.9
 contractions==0.1.73
 pyinflect==0.5.1
